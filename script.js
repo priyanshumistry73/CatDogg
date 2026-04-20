@@ -1,4 +1,4 @@
-const URL = "/public/";
+const URL = https://teachablemachine.withgoogle.com/models/AhyBtfsT5C/
 
 let model;
 
