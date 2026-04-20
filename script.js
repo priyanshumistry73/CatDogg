@@ -2,40 +2,64 @@ const URL = "https://teachablemachine.withgoogle.com/models/AhyBtfsT5C/";
 
 let model, webcam, labelContainer, maxPredictions;
 
+// Load model once
+async function loadModel() {
+    if (!model) {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        labelContainer = document.getElementById("label-container");
+        labelContainer.innerHTML = "";
+
+        for (let i = 0; i < maxPredictions; i++) {
+            labelContainer.appendChild(document.createElement("div"));
+        }
+    }
+}
+
+// Webcam setup
 async function init() {
-    const modelURL = URL + "model.json";
-    const metadataURL = URL + "metadata.json";
+    await loadModel();
 
-    // Load model
-    model = await tmImage.load(modelURL, metadataURL);
-    maxPredictions = model.getTotalClasses();
-
-    // Setup webcam
     const flip = true;
     webcam = new tmImage.Webcam(300, 300, flip);
     await webcam.setup();
     await webcam.play();
 
-    window.requestAnimationFrame(loop);
-
+    document.getElementById("webcam-container").innerHTML = "";
     document.getElementById("webcam-container").appendChild(webcam.canvas);
 
-    labelContainer = document.getElementById("label-container");
-    labelContainer.innerHTML = "";
-
-    for (let i = 0; i < maxPredictions; i++) {
-        labelContainer.appendChild(document.createElement("div"));
-    }
+    window.requestAnimationFrame(loop);
 }
 
 async function loop() {
     webcam.update();
-    await predict();
+    await predict(webcam.canvas);
     window.requestAnimationFrame(loop);
 }
 
-async function predict() {
-    const prediction = await model.predict(webcam.canvas);
+// Upload image handling
+document.getElementById("upload").addEventListener("change", async function(event) {
+    await loadModel();
+
+    const file = event.target.files[0];
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+
+    img.onload = async () => {
+        document.getElementById("image-preview").innerHTML = "";
+        document.getElementById("image-preview").appendChild(img);
+
+        await predict(img);
+    };
+});
+
+// Prediction function
+async function predict(image) {
+    const prediction = await model.predict(image);
 
     for (let i = 0; i < maxPredictions; i++) {
         const classPrediction =
