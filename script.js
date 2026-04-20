@@ -1,26 +1,47 @@
-const URL = https://teachablemachine.withgoogle.com/models/AhyBtfsT5C/
+const URL = "https://teachablemachine.withgoogle.com/models/AhyBtfsT5C/";
 
-let model;
+let model, webcam, labelContainer, maxPredictions;
 
 async function init() {
-    model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+    const modelURL = URL + "model.json";
+    const metadataURL = URL + "metadata.json";
+
+    // Load model
+    model = await tmImage.load(modelURL, metadataURL);
+    maxPredictions = model.getTotalClasses();
+
+    // Setup webcam
+    const flip = true;
+    webcam = new tmImage.Webcam(300, 300, flip);
+    await webcam.setup();
+    await webcam.play();
+
+    window.requestAnimationFrame(loop);
+
+    document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+    labelContainer = document.getElementById("label-container");
+    labelContainer.innerHTML = "";
+
+    for (let i = 0; i < maxPredictions; i++) {
+        labelContainer.appendChild(document.createElement("div"));
+    }
 }
 
-init();
+async function loop() {
+    webcam.update();
+    await predict();
+    window.requestAnimationFrame(loop);
+}
 
-document.getElementById("upload").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
+async function predict() {
+    const prediction = await model.predict(webcam.canvas);
 
-    img.onload = async () => {
-        const prediction = await model.predict(img);
-        let result = "";
+    for (let i = 0; i < maxPredictions; i++) {
+        const classPrediction =
+            prediction[i].className + ": " +
+            (prediction[i].probability * 100).toFixed(2) + "%";
 
-        prediction.forEach(p => {
-            result += `${p.className}: ${p.probability.toFixed(2)}\n`;
-        });
-
-        document.getElementById("result").innerText = result;
-    };
-});
+        labelContainer.childNodes[i].innerHTML = classPrediction;
+    }
+}
