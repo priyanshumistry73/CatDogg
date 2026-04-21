@@ -2,119 +2,45 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI Image Classifier</title>
+<title>AI Classifier</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
-<!-- Google Font -->
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
-
 
 <style>
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
-  }
-
-  body {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-
-  .container {
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(15px);
-    padding: 30px;
-    border-radius: 20px;
-    width: 400px;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  }
-
-  h1 {
-    margin-bottom: 20px;
-    font-weight: 600;
-  }
-
-  .buttons button {
-    margin: 10px 5px;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    background: #ffffff;
-    color: #333;
-    font-weight: 600;
-    transition: 0.3s;
-  }
-
-  .buttons button:hover {
-    transform: scale(1.05);
-    background: #ffd369;
-  }
-
-  #webcam-container canvas {
-    margin-top: 15px;
-    border-radius: 15px;
-    width: 100%;
-  }
-
-  #preview {
-    margin-top: 15px;
-    border-radius: 15px;
-    width: 100%;
-    display: none;
-  }
-
-  input {
-    margin-top: 15px;
-    color: white;
-  }
-
-  #result {
-    margin-top: 20px;
-    text-align: left;
-  }
-
-  .bar {
-    background: rgba(255,255,255,0.2);
-    border-radius: 10px;
-    margin: 8px 0;
-    overflow: hidden;
-  }
-
-  .bar-fill {
-    height: 20px;
-    background: #00ffcc;
-    text-align: right;
-    padding-right: 5px;
-    font-size: 12px;
-    color: black;
-    font-weight: bold;
-  }
-
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  color: white;
+  text-align: center;
+}
+.container {
+  margin-top: 50px;
+}
+button {
+  padding: 10px 15px;
+  margin: 10px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}
+#result { margin-top: 20px; }
 </style>
 </head>
 
 <body>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+
 <div class="container">
   <h1>🤖 AI Classifier</h1>
 
-  <div class="buttons">
-    <button onclick="initWebcam()">📷 Start Camera</button>
-    <button onclick="stopWebcam()">🛑 Stop</button>
-  </div>
+  <button onclick="initWebcam()">Start Camera</button>
+  <button onclick="stopWebcam()">Stop</button>
 
+  <br><br>
   <input type="file" id="upload">
 
   <div id="webcam-container"></div>
-  <img id="preview">
+  <img id="preview" width="224">
 
   <div id="result"></div>
 </div>
@@ -123,20 +49,18 @@
 const URL = "./model/";
 let model, webcam;
 
-// Load model
 async function loadModel() {
   model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+  console.log("Model Loaded");
 }
 
 window.onload = loadModel;
 
-// Webcam
 async function initWebcam() {
   webcam = new tmImage.Webcam(224, 224, true);
   await webcam.setup();
   await webcam.play();
 
-  document.getElementById("preview").style.display = "none";
   document.getElementById("webcam-container").innerHTML = "";
   document.getElementById("webcam-container").appendChild(webcam.canvas);
 
@@ -153,39 +77,25 @@ function stopWebcam() {
   if (webcam) webcam.stop();
 }
 
-// Upload
 document.getElementById("upload").addEventListener("change", function (e) {
   const file = e.target.files[0];
   const img = document.getElementById("preview");
 
   img.src = window.URL.createObjectURL(file);
-  img.style.display = "block";
-
-  document.getElementById("webcam-container").innerHTML = "";
-
   img.onload = () => predict(img);
 });
 
-// Prediction UI
 async function predict(image) {
+  if (!model) return;
+
   const predictions = await model.predict(image);
 
-  let html = "";
-
+  let result = "";
   predictions.forEach(p => {
-    const percent = (p.probability * 100).toFixed(1);
-
-    html += `
-      <div>${p.className}</div>
-      <div class="bar">
-        <div class="bar-fill" style="width:${percent}%">
-          ${percent}%
-        </div>
-      </div>
-    `;
+    result += `${p.className}: ${(p.probability * 100).toFixed(2)}% <br>`;
   });
 
-  document.getElementById("result").innerHTML = html;
+  document.getElementById("result").innerHTML = result;
 }
 </script>
 
