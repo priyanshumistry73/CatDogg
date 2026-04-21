@@ -1,42 +1,62 @@
-const URL = "https://teachablemachine.withgoogle.com/models/AhyBtfsT5C/";
+const URL = "./model/";
 
-let model;
+let model, webcam, maxPredictions;
 
-// Load model
-window.onload = async () => {
-    try {
-        model = await tmImage.load(URL + "model.json", URL + "metadata.json");
-        document.getElementById("result").innerText = "✅ Model Loaded! Upload an image.";
-    } catch (err) {
-        console.error(err);
-        document.getElementById("result").innerText = "❌ Model failed to load";
-    }
-};
+async function loadModel() {
+  const modelURL = URL + "model.json";
+  const metadataURL = URL + "metadata.json";
 
-// Upload image
-document.getElementById("upload").addEventListener("change", async (event) => {
-    if (!model) {
-        alert("Model still loading...");
-        return;
-    }
+  model = await tmImage.load(modelURL, metadataURL);
+  maxPredictions = model.getTotalClasses();
+}
 
-    const file = event.target.files[0];
-    if (!file) return;
+loadModel();
 
-    const img = document.createElement("img");
-    img.src = URL.createObjectURL(file);
+// ================== WEBCAM ==================
+async function initWebcam() {
+  const flip = true;
+  webcam = new tmImage.Webcam(224, 224, flip);
 
-    img.onload = async () => {
-        document.getElementById("image-preview").innerHTML = "";
-        document.getElementById("image-preview").appendChild(img);
+  await webcam.setup();
+  await webcam.play();
 
-        const prediction = await model.predict(img);
+  document.getElementById("webcam-container").innerHTML = "";
+  document.getElementById("webcam-container").appendChild(webcam.canvas);
 
-        let result = "";
-        prediction.forEach(p => {
-            result += `${p.className}: ${(p.probability * 100).toFixed(2)}%\n`;
-        });
+  window.requestAnimationFrame(loop);
+}
 
-        document.getElementById("result").innerText = result;
-    };
+async function loop() {
+  webcam.update();
+  await predict(webcam.canvas);
+  window.requestAnimationFrame(loop);
+}
+
+function stopWebcam() {
+  if (webcam) webcam.stop();
+}
+
+// ================== FILE UPLOAD ==================
+document.getElementById("upload").addEventListener("change", async function (event) {
+  const file = event.target.files[0];
+  const img = document.getElementById("preview");
+
+  img.src = URL.createObjectURL(file);
+
+  img.onload = async () => {
+    await predict(img);
+  };
 });
+
+// ================== PREDICTION ==================
+async function predict(image) {
+  const prediction = await model.predict(image);
+
+  let resultText = "";
+
+  prediction.forEach(p => {
+    resultText += `${p.className}: ${(p.probability * 100).toFixed(2)}% <br>`;
+  });
+
+  document.getElementById("result").innerHTML = resultText;
+}
