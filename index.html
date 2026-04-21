@@ -1,34 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI Classifier</title>
-  <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-      background: #f4f4f4;
-    }
-    img {
-      width: 300px;
-      margin-top: 10px;
-      border-radius: 10px;
-    }
-  </style>
+  <title>Teachable Machine App</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
 </head>
+
 <body>
+  <h1>Dog vs Cat Classifier 🐶🐱</h1>
 
-<h1>🤖 AI Image Classifier</h1>
+  <button onclick="initWebcam()">Start Webcam</button>
+  <button onclick="stopWebcam()">Stop Webcam</button>
 
-<input type="file" id="upload" accept="image/*"><br><br>
+  <br><br>
 
-<div id="image-preview"></div>
-<h3 id="result">Loading model...</h3>
+  <input type="file" id="upload" accept="image/*">
 
-<!-- IMPORTANT: Load these FIRST -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+  <br><br>
 
-<script src="script.js"></script>
+  <div id="webcam-container"></div>
+  <img id="preview" width="224"/>
 
+  <h2 id="result"></h2>
+
+  <script src="script.js"></script>
 </body>
 </html>
