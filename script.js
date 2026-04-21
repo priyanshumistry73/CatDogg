@@ -1,5 +1,4 @@
 const URL = "./model/";
-
 let model, webcam, maxPredictions;
 
 async function loadModel() {
@@ -10,7 +9,9 @@ async function loadModel() {
   maxPredictions = model.getTotalClasses();
 }
 
-loadModel();
+window.onload = async () => {
+  await loadModel();
+};
 
 // ================== WEBCAM ==================
 async function initWebcam() {
@@ -41,7 +42,7 @@ document.getElementById("upload").addEventListener("change", async function (eve
   const file = event.target.files[0];
   const img = document.getElementById("preview");
 
-  img.src = URL.createObjectURL(file);
+  img.src = window.URL.createObjectURL(file);
 
   img.onload = async () => {
     await predict(img);
